@@ -1,5 +1,5 @@
 // src/components/MyComponent.test.tsx
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import Pill, { PillProps, PillType } from "./Pill";
 
 const basicPillData: PillType = {
@@ -32,6 +32,10 @@ const roundedIconPill: PillProps = {
   data: [roundedIconPillData],
   rounded: true,
 };
+
+afterEach(() => {
+  cleanup();
+});
 
 test("renders one pill", () => {
   render(<Pill {...basicPill} />);
@@ -76,4 +80,30 @@ test("registers onSelect and onClick", () => {
 
   fireEvent.click(closeBtn);
   expect(closeSelectPill.onClose).toHaveBeenCalledTimes(1);
+});
+
+test("keyboard actions closes a pill onClick", () => {
+  render(<Pill {...closeSelectPill} />);
+  const closeBtn = screen.getByLabelText(`Close ${closeSelectPillData.label}`);
+
+  closeBtn.focus();
+  fireEvent.keyDown(document.activeElement || document.body, {
+    key: "Enter",
+    code: "Enter",
+    charCode: 13,
+  });
+  fireEvent.keyDown(document.activeElement || document.body, {
+    key: " ",
+    code: "Space",
+    charCode: 32,
+  });
+
+  expect(closeSelectPill.onClose).toHaveBeenCalledTimes(3); // 1 time from mouse event + 2 times from keyboard events
+
+  fireEvent.keyDown(document.activeElement || document.body, {
+    key: "Escape",
+    code: "Escape",
+    charCode: 27,
+  });
+  expect(document.activeElement).toBe(document.body);
 });
